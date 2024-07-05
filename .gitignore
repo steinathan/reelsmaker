@@ -1,0 +1,6 @@
+tmp/
+subtitles/*.srt
+*.mp3,*.mp4
+*.webm
+
+__pycache__/
