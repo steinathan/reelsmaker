@@ -24,7 +24,9 @@ text input
 Search for videos
 
  """
-change_settings({"IMAGEMAGICK_BINARY": "/tmp/magick"})
+
+magickpath = os.path.join(os.getcwd(), "bin", "magick")
+change_settings({"IMAGEMAGICK_BINARY": magickpath})
 
 
 class ReelsMakerConfig(BaseModel):
