@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import timedelta
 from pathlib import Path
@@ -5,7 +6,6 @@ from pathlib import Path
 import srt_equalizer
 from loguru import logger
 from moviepy.audio.io.AudioFileClip import AudioFileClip
-
 
 
 class SubtitleGenerator:
@@ -24,7 +24,10 @@ class SubtitleGenerator:
     ) -> str:
         logger.info("Generating subtitles...")
 
-        subtitles_path = Path(self.cwd) / f"subtitles/{uuid.uuid4()}.srt"
+        basedir = os.path.join(self.cwd, "subtitles")
+        os.makedirs(basedir, exist_ok=True)
+
+        subtitles_path = Path(basedir, f"{uuid.uuid4()}.srt")
 
         subtitles = await self.locally_generate_subtitles(
             sentences=sentences, audio_clips=audio_clips

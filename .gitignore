@@ -4,3 +4,5 @@ subtitles/*.srt
 *.webm
 
 __pycache__/
+bin/*
+*.log
