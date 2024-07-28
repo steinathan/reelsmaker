@@ -1,0 +1,22 @@
+# fly.toml app configuration file generated for reelsmaker on 2024-07-14T15:38:06+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'reelsmaker'
+primary_region = 'lhr'
+
+[build]
+
+[http_service]
+  internal_port = 8501
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
