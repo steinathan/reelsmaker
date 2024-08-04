@@ -130,7 +130,7 @@ async def main():
                 st.download_button("Download Reels", video_path, file_name="reels.mp4")
             except Exception as e:
                 del queue[queue_id]
-                logger.error(f"removed from queue: {queue_id}: -> {e}")
+                logger.exception(f"removed from queue: {queue_id}: -> {e}")
                 st.error(e)
 
 

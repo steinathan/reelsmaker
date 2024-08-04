@@ -1,19 +1,26 @@
+import os
 from app.reels_maker import ReelsMaker, ReelsMakerConfig
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_reels_maker():
+    base_path = os.path.join(os.getcwd(), "tmp/test")
+
     config = ReelsMakerConfig.model_validate(
         {
-            "cwd": "/home/navicstein/Projects/automovie/tmp/3e760c2b-73c5-4b5c-b5fa-a0bd756b370e",
+            "cwd": base_path,
             "subtitles_position": "center,center",
+            "threads": 4,
             "text_color": "#ffffff",
             "voice": "en_male_narration",
-            "prompt": "",
+            "prompt": "Generate a prompt for a sunday morning",
+            "sentence": "Today is a fresh start. Reflect on your achievements, rest and rejuvenate, and set new goals for the week ahead. Celebrate your victories, no matter how small, and take time to relax and recharge. Embrace this day with positivity and gratitude.",
             "background_audio_url": "",
-            "background_music_path": "/home/navicstein/Projects/automovie/tmp/3e760c2b-73c5-4b5c-b5fa-a0bd756b370e/background.mp3",
+            "background_music_path": f"{base_path}/background.mp3",
             "video_paths": [
-                "/home/navicstein/Projects/automovie/tmp/3e760c2b-73c5-4b5c-b5fa-a0bd756b370e/Screenshare - 2023-05-19 10_33_01 PM.mp4",
-                "/home/navicstein/Projects/automovie/tmp/3e760c2b-73c5-4b5c-b5fa-a0bd756b370e/Screenshare - 2023-05-19 10_30_11 PM.mp4",
+                f"{base_path}/video1.mp4",
+                f"{base_path}/video2.mp4",
             ],
         }
     )

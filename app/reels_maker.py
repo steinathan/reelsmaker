@@ -5,8 +5,9 @@ import aiohttp
 from loguru import logger
 from moviepy.audio.AudioClip import concatenate_audioclips
 from moviepy.audio.io.AudioFileClip import AudioFileClip
-from moviepy.config import change_settings
 from moviepy.editor import VideoFileClip
+import moviepy.config as moviepy_config
+
 from pydantic import BaseModel
 from typing_extensions import cast
 
@@ -25,8 +26,15 @@ Search for videos
 
  """
 
+
 magickpath = os.path.join(os.getcwd(), "bin", "magick")
-change_settings({"IMAGEMAGICK_BINARY": magickpath})
+policypath = os.path.join(os.getcwd(), "bin", "policy.xml")
+
+os.environ["IMAGEMAGICK_BINARY"] = magickpath
+os.environ["MAGICK_CONFIGURE_PATH"] = policypath
+moviepy_config.IMAGEMAGICK_BINARY = magickpath
+
+moviepy_config.check()
 
 
 class ReelsMakerConfig(BaseModel):

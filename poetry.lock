@@ -605,6 +605,17 @@ files = [
 setuptools = "*"
 
 [[package]]
+name = "iniconfig"
+version = "2.0.0"
+description = "brain-dead simple config-ini parsing"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
+    {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.4"
 description = "A very fast and expressive template engine."
@@ -780,27 +791,31 @@ files = [
 
 [[package]]
 name = "moviepy"
-version = "1.0.3"
+version = "2.0.0.dev0"
 description = "Video editing with Python"
 optional = false
 python-versions = "*"
-files = [
-    {file = "moviepy-1.0.3.tar.gz", hash = "sha256:2884e35d1788077db3ff89e763c5ba7bfddbd7ae9108c9bc809e7ba58fa433f5"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-decorator = ">=4.0.2,<5.0"
-imageio = {version = ">=2.5,<3.0", markers = "python_version >= \"3.4\""}
-imageio_ffmpeg = {version = ">=0.2.0", markers = "python_version >= \"3.4\""}
-numpy = {version = ">=1.17.3", markers = "python_version > \"2.7\""}
+decorator = ">=4.0.2,<6.0"
+imageio = ">=2.5,<3.0"
+imageio-ffmpeg = ">=0.2.0"
+numpy = ">=1.17.3"
 proglog = "<=1.0.0"
-requests = ">=2.8.1,<3.0"
-tqdm = ">=4.11.2,<5.0"
 
 [package.extras]
-doc = ["Sphinx (>=1.5.2,<2.0)", "numpydoc (>=0.6.0,<1.0)", "pygame (>=1.9.3,<2.0)", "sphinx_rtd_theme (>=0.1.10b0,<1.0)"]
-optional = ["matplotlib (>=2.0.0,<3.0)", "opencv-python (>=3.0,<4.0)", "scikit-image (>=0.13.0,<1.0)", "scikit-learn", "scipy (>=0.19.0,<1.5)", "youtube_dl"]
-test = ["coverage (<5.0)", "coveralls (>=1.1,<2.0)", "pytest (>=3.0.0,<4.0)", "pytest-cov (>=2.5.1,<3.0)", "requests (>=2.8.1,<3.0)"]
+doc = ["Sphinx (==3.4.3)", "numpydoc (<2.0)", "sphinx-rtd-theme (==0.5.1)"]
+lint = ["black (>=22.3.0)", "flake8 (>=4.0.1)", "flake8-absolute-import (>=1.0)", "flake8-docstrings (>=1.6.0)", "flake8-implicit-str-concat (==0.3.0)", "flake8-rst-docstrings (>=0.2.5)", "isort (>=5.10.1)", "pre-commit (>=2.19.0)"]
+optional = ["matplotlib", "opencv-python", "pygame (>=1.9.3)", "python-dotenv (>=0.10)", "scikit-image", "scikit-learn", "scipy", "youtube-dl"]
+test = ["coveralls (>=3.0,<4.0)", "pytest (>=3.0.0,<7.0.0)", "pytest-cov (>=2.5.1,<3.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/Zulko/moviepy.git"
+reference = "HEAD"
+resolved_reference = "0f6f6d4d9b96c69d109975549fe6293931f1a19d"
 
 [[package]]
 name = "multidict"
@@ -1158,6 +1173,21 @@ typing = ["typing-extensions"]
 xmp = ["defusedxml"]
 
 [[package]]
+name = "pluggy"
+version = "1.5.0"
+description = "plugin and hook calling mechanisms for python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pluggy-1.5.0-py3-none-any.whl", hash = "sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669"},
+    {file = "pluggy-1.5.0.tar.gz", hash = "sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1"},
+]
+
+[package.extras]
+dev = ["pre-commit", "tox"]
+testing = ["pytest", "pytest-benchmark"]
+
+[[package]]
 name = "proglog"
 version = "0.1.10"
 description = "Log and progress bar manager for console, notebooks, web..."
@@ -1394,6 +1424,78 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pytest"
+version = "8.3.2"
+description = "pytest: simple powerful testing with Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
+    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+iniconfig = "*"
+packaging = "*"
+pluggy = ">=1.5,<2"
+
+[package.extras]
+dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+
+[[package]]
+name = "pytest-asyncio"
+version = "0.23.8"
+description = "Pytest support for asyncio"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest_asyncio-0.23.8-py3-none-any.whl", hash = "sha256:50265d892689a5faefb84df80819d1ecef566eb3549cf915dfb33569359d1ce2"},
+    {file = "pytest_asyncio-0.23.8.tar.gz", hash = "sha256:759b10b33a6dc61cce40a8bd5205e302978bbbcc00e279a8b61d9a6a3c82e4d3"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0,<9"
+
+[package.extras]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
+testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
+
+[[package]]
+name = "pytest-env"
+version = "1.1.3"
+description = "pytest plugin that allows you to add environment variables."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest_env-1.1.3-py3-none-any.whl", hash = "sha256:aada77e6d09fcfb04540a6e462c58533c37df35fa853da78707b17ec04d17dfc"},
+    {file = "pytest_env-1.1.3.tar.gz", hash = "sha256:fcd7dc23bb71efd3d35632bde1bbe5ee8c8dc4489d6617fb010674880d96216b"},
+]
+
+[package.dependencies]
+pytest = ">=7.4.3"
+
+[package.extras]
+test = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "pytest-mock (>=3.12)"]
+
+[[package]]
+name = "pytest-mock"
+version = "3.14.0"
+description = "Thin-wrapper around the mock package for easier use with pytest"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-mock-3.14.0.tar.gz", hash = "sha256:2719255a1efeceadbc056d6bf3df3d1c5015530fb40cf347c0f9afac88410bd0"},
+    {file = "pytest_mock-3.14.0-py3-none-any.whl", hash = "sha256:0b72c38033392a5f4621342fe11e9219ac11ec9d375f8e2a0c164539e0d70f6f"},
+]
+
+[package.dependencies]
+pytest = ">=6.2.5"
+
+[package.extras]
+dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "python-dateutil"
@@ -2064,4 +2166,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f6d77bfdb386f647f6743ef6fe4f80e0bdf761d853946637c5bf36ea3eb8601d"
+content-hash = "a3f5bfa70b461cd69ba22c8b9e69e4779b90f096e3859aa5ec34db19f2592d36"

@@ -7,17 +7,17 @@ from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.editor import VideoFileClip
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.compositing.concatenate import concatenate_videoclips
-from moviepy.video.fx.all import blackwhite, crop  # type: ignore
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.video.VideoClip import TextClip
 from moviepy.audio.AudioClip import CompositeAudioClip
+from moviepy.video import fx
 
 
 class VideoGenerator:
     def __init__(
         self,
         cwd,
-        fontsize: int = 100,
+        fontsize: int = 150,
         stroke_color: str = "black",
         text_color: str = "white",
         stroke_width: int = 5,
@@ -49,8 +49,7 @@ class VideoGenerator:
 
         while tot_dur < max_duration:
             for video_path in video_paths:
-                clip = VideoFileClip(video_path)
-                clip = clip.without_audio()
+                clip = VideoFileClip(video_path).without_audio()
                 logger.debug(
                     f"Processing clip: {video_path}, duration: {clip.duration}"
                 )
@@ -59,10 +58,10 @@ class VideoGenerator:
                     clip = clip.subclip(0, (max_duration - tot_dur))
                 elif req_dur < clip.duration:
                     clip = clip.subclip(0, req_dur)
-                clip = clip.set_fps(30)
+                clip = clip.with_fps(30)
 
                 if round((clip.w / clip.h), 4) < 0.5625:
-                    clip = crop(
+                    clip = fx.crop(
                         clip,
                         width=clip.w,
                         height=round(clip.w / 0.5625),
@@ -70,7 +69,7 @@ class VideoGenerator:
                         y_center=clip.h / 2,
                     )
                 else:
-                    clip = crop(
+                    clip = fx.crop(
                         clip,
                         width=round(0.5625 * clip.h),
                         height=clip.h,
@@ -80,7 +79,7 @@ class VideoGenerator:
                 clip = clip.resize((1080, 1920))
 
                 # apply grayscale effect
-                clip = blackwhite(clip)
+                clip = fx.blackwhite(clip)
 
                 if clip.duration > max_clip_duration:
                     clip = clip.subclip(0, max_clip_duration)
@@ -90,7 +89,7 @@ class VideoGenerator:
                 logger.debug(f"Total duration after adding clip: {tot_dur}")
 
         final_clip = concatenate_videoclips(clips)
-        final_clip = final_clip.set_fps(30)
+        final_clip = final_clip.with_fps(30)
         final_clip.write_videofile(combined_video_path, threads=threads)
 
         return combined_video_path
@@ -110,30 +109,34 @@ class VideoGenerator:
     ) -> str:
         def generator(txt):
             return TextClip(
-                txt=txt,
+                text=txt,
                 font="fonts/bold_font.ttf",
-                fontsize=self.fontsize,
+                font_size=self.fontsize,
                 color=text_color or self.text_color,
                 stroke_color=self.stroke_color,
                 stroke_width=self.stroke_width,
+                method="label",
+                bg_color="yellow",
             )
 
         horizontal_subtitles_position, vertical_subtitles_position = (
             subtitles_position.split(",")
         )
 
-        subtitles = SubtitlesClip(subtitles=subtitles_path, make_textclip=generator)
+        subtitles = SubtitlesClip(
+            subtitles=subtitles_path, make_textclip=generator, encoding="utf-8"
+        )
         result = CompositeVideoClip(
             [
                 VideoFileClip(combined_video_path),
-                subtitles.set_pos(  # type: ignore
+                subtitles.with_position(
                     (horizontal_subtitles_position, vertical_subtitles_position)
                 ),
             ]
         )
 
         audio = AudioFileClip(tts_path)
-        result = result.set_audio(audio)
+        result = result.with_audio(audio)
 
         output_path = (Path(self.cwd) / "master__video.mp4").as_posix()
         result.write_videofile(output_path, threads=threads)
@@ -143,17 +146,16 @@ class VideoGenerator:
     async def add_background_music(self, video_clip: VideoFileClip, song_path: str):
         logger.info(f"Adding background music: {song_path}")
 
-        # add song to video at 30% volume using moviepy
         original_duration = video_clip.duration
         original_audio = video_clip.audio
-        song_clip = AudioFileClip(song_path).set_fps(44100)
+        song_clip = AudioFileClip(song_path).with_fps(44100)
 
         # set the volume of the song to 10% of the original volume
-        song_clip = song_clip.volumex(0.1).set_fps(44100)
+        song_clip = song_clip.subclip().multiply_volume(0.2)
 
         # add the song to the video
         comp_audio = CompositeAudioClip([original_audio, song_clip])
-        video_clip = video_clip.set_audio(comp_audio)
-        video_clip = video_clip.set_fps(30)
-        video_clip = video_clip.set_duration(original_duration)
+        video_clip = video_clip.with_audio(comp_audio)
+        video_clip = video_clip.with_fps(30)
+        video_clip = video_clip.with_duration(original_duration)
         return video_clip
