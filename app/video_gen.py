@@ -1,32 +1,40 @@
+import multiprocessing
 import random
 import uuid
 from pathlib import Path
 
 from loguru import logger
+from moviepy import ImageClip
+from moviepy.audio.AudioClip import CompositeAudioClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.editor import VideoFileClip
+from moviepy.video import fx
 from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
 from moviepy.video.compositing.concatenate import concatenate_videoclips
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.video.VideoClip import TextClip
-from moviepy.audio.AudioClip import CompositeAudioClip
-from moviepy.video import fx
+from pydantic import BaseModel
+
+
+class VideoGeneratorConfig(BaseModel):
+    fontsize: int = 100
+    stroke_color: str = "black"
+    text_color: str = "white"
+    stroke_width: int = 5
+    font_path: str = "fonts/bold_font.ttf"
+    bg_color: str = "yellow"
+    subtitles_position: str = "center,center"
+    threads: int = multiprocessing.cpu_count()
 
 
 class VideoGenerator:
     def __init__(
         self,
-        cwd,
-        fontsize: int = 150,
-        stroke_color: str = "black",
-        text_color: str = "white",
-        stroke_width: int = 5,
+        cwd: str,
+        config: VideoGeneratorConfig,
     ):
+        self.config = config
         self.cwd = cwd
-        self.fontsize = fontsize
-        self.text_color = text_color
-        self.stroke_color = stroke_color
-        self.stroke_width = stroke_width
 
     async def combine_videos(
         self,
@@ -103,24 +111,21 @@ class VideoGenerator:
         combined_video_path: str,
         tts_path: str,
         subtitles_path: str,
-        threads: int,
-        subtitles_position: str,
-        text_color: str | None = None,
     ) -> str:
         def generator(txt):
             return TextClip(
                 text=txt,
                 font="fonts/bold_font.ttf",
-                font_size=self.fontsize,
-                color=text_color or self.text_color,
-                stroke_color=self.stroke_color,
-                stroke_width=self.stroke_width,
+                font_size=self.config.fontsize,
+                color=self.config.text_color,
+                stroke_color=self.config.stroke_color,
+                stroke_width=self.config.stroke_width,
                 method="label",
-                bg_color="yellow",
+                bg_color=self.config.bg_color,
             )
 
         horizontal_subtitles_position, vertical_subtitles_position = (
-            subtitles_position.split(",")
+            self.config.subtitles_position.split(",")
         )
 
         subtitles = SubtitlesClip(
@@ -139,7 +144,7 @@ class VideoGenerator:
         result = result.with_audio(audio)
 
         output_path = (Path(self.cwd) / "master__video.mp4").as_posix()
-        result.write_videofile(output_path, threads=threads)
+        result.write_videofile(output_path, threads=self.config.threads)
 
         return output_path
 
@@ -159,3 +164,7 @@ class VideoGenerator:
         video_clip = video_clip.with_fps(30)
         video_clip = video_clip.with_duration(original_duration)
         return video_clip
+
+    async def add_fade_out(self, video_clip: VideoFileClip) -> VideoFileClip:
+        """Adds a fade out to the end of the video but let the audio continue playing."""
+        return fx.fadeout(video_clip, 3)

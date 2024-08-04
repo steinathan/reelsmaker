@@ -5,3 +5,5 @@ subtitles/*.srt
 
 __pycache__/
 *.log
+.env
+*.db

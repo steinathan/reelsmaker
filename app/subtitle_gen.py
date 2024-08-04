@@ -6,6 +6,11 @@ from pathlib import Path
 import srt_equalizer
 from loguru import logger
 from moviepy.audio.io.AudioFileClip import AudioFileClip
+from pydantic import BaseModel
+
+
+class SubtitleConfig(BaseModel):
+    cwd: str
 
 
 class SubtitleGenerator:

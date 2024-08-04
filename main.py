@@ -25,11 +25,11 @@ async def main():
     st.write("Auto generate AI Reels Video Story from simple prompts")
     st.divider()
 
-    # prompt = st.text_area(
-    #     label="Enter your prompt",
-    #     placeholder="A motivation quote about life & pleasure",
-    #     height=100,
-    # )
+    prompt = st.text_area(
+        label="Enter your prompt",
+        placeholder="A motivation quote about life & pleasure",
+        height=100,
+    )
 
     sentence = st.text_area(
         label="Enter your quote",
@@ -87,7 +87,7 @@ async def main():
         config = ReelsMakerConfig(
             background_audio_url=background_audio_url,
             cwd=cwd,
-            prompt=None,
+            prompt=prompt,
             sentence=sentence,
             subtitles_position=subtitles_position or "center,center",
             text_color=color or "#ffffff",

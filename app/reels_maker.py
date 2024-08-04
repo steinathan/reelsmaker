@@ -11,27 +11,18 @@ import moviepy.config as moviepy_config
 from pydantic import BaseModel
 from typing_extensions import cast
 
+from app.prompt_chain import PromptGenerator
 from app.subtitle_gen import SubtitleGenerator
-from app.synth_gen import SynthGenerator
-from app.video_gen import VideoGenerator
+from app.synth_gen import SynthConfig, SynthGenerator
+from app.video_gen import VideoGenerator, VideoGeneratorConfig
+from dotenv import load_dotenv
 
-"""
-text input
-- generate script from text
-- generate search terms from script
-- for each search term, download video
-- split sentences into chunks
 
-Search for videos
-
- """
-
+load_dotenv()
 
 magickpath = os.path.join(os.getcwd(), "bin", "magick")
-policypath = os.path.join(os.getcwd(), "bin", "policy.xml")
 
 os.environ["IMAGEMAGICK_BINARY"] = magickpath
-os.environ["MAGICK_CONFIGURE_PATH"] = policypath
 moviepy_config.IMAGEMAGICK_BINARY = magickpath
 
 moviepy_config.check()
@@ -54,6 +45,12 @@ class ReelsMakerConfig(BaseModel):
 
     video_paths: list[str] = []
 
+    video_gen_config: VideoGeneratorConfig = VideoGeneratorConfig()
+    """ config for the video generator """
+
+    synth_config: SynthConfig = SynthConfig()
+    """ config for the synthesizer """
+
 
 class ReelsMaker:
     def __init__(self, config: ReelsMakerConfig):
@@ -61,8 +58,11 @@ class ReelsMaker:
 
         self.cwd = config.cwd
         self.subtitle_generator = SubtitleGenerator(cwd=self.cwd)
-        self.video_generator = VideoGenerator(cwd=self.cwd)
-        self.syth_generator = SynthGenerator(cwd=self.cwd, voice=config.voice)
+
+        self.video_generator = VideoGenerator(self.cwd, config.video_gen_config)
+        self.syth_generator = SynthGenerator(self.cwd, config.synth_config)
+
+        self.prompt_generator = PromptGenerator()
 
         self.sentences: list[str] = []
         self.audio_paths = []
@@ -76,14 +76,7 @@ class ReelsMaker:
         self.voice = config.voice
         self.background_music_path = os.path.join(self.cwd, "background.mp3")
 
-        info = {
-            "threads": self.threads,
-            "text_color": self.text_color,
-            "voice": self.voice,
-            "background_music_path": self.background_music_path,
-            "subtitles_position": self.subtitles_position,
-        }
-        logger.info(f"Starting Reels Maker with: {info}")
+        logger.info(f"Starting Reels Maker with: {self.config.model_dump()}")
 
     async def download_audio(self, audio_url) -> str:
         async with aiohttp.ClientSession() as session:
@@ -95,8 +88,9 @@ class ReelsMaker:
                     f.write(await response.read())
                     return os.path.join(self.cwd, os.path.basename(audio_url))
 
-    async def generate_script(self, prompt: str):
-        return self.config.sentence
+    async def generate_script(self, sentence: str):
+        logger.debug(f"Generating script from prompt: {sentence}")
+        return await self.prompt_generator.generate_sentence(sentence)
 
     async def generate_search_terms(self, script):
         logger.debug("Generating search terms for script...")
@@ -176,9 +170,6 @@ class ReelsMaker:
             combined_video_path=combined_video_path,
             tts_path=self.final_audio_path,
             subtitles_path=subtitles_path,
-            threads=self.threads,
-            subtitles_position=self.subtitles_position,
-            text_color=self.text_color,
         )
 
         video_clip = VideoFileClip(filename=self.final_video_path)
@@ -189,6 +180,8 @@ class ReelsMaker:
             )
         else:
             logger.warning("Skipping background music because its not provided")
+
+        video_clip = await self.video_generator.add_fade_out(video_clip)
 
         video_clip.write_videofile(
             os.path.join(self.cwd, "master__final__video.mp4"), threads=self.threads
