@@ -17,7 +17,25 @@ class SubtitleGenerator:
     def __init__(self, cwd):
         self.cwd = cwd
 
-    async def equalize_subtitles(self, srt_path: str, max_chars: int = 10) -> None:
+    async def wordify(self, srt_path: str, max_chars: int = 10) -> None:
+        """Wordify the srt file, each line is a word
+
+        Example:
+        --------------
+        1
+        00:00:00,000 --> 00:00:00,333
+        Imagine
+
+        2
+        00:00:00,333 --> 00:00:00,762
+        waking up
+
+        3
+        00:00:00,762 --> 00:00:01,143
+        each day
+        ----------------
+        """
+
         srt_equalizer.equalize_srt_file(srt_path, srt_path, max_chars)
 
     async def generate_subtitles(
@@ -40,7 +58,7 @@ class SubtitleGenerator:
         with open(subtitles_path, "w+") as file:
             file.write(subtitles)
 
-        await self.equalize_subtitles(srt_path=subtitles_path.as_posix())
+        await self.wordify(srt_path=subtitles_path.as_posix())
         return subtitles_path.as_posix()
 
     async def locally_generate_subtitles(

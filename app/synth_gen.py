@@ -11,7 +11,7 @@ from app import tiktokvoice
 
 
 class SynthConfig(BaseModel):
-    voice_provider: Literal["elevenlabs", "tiktok"] = "elevenlabs"
+    voice_provider: Literal["elevenlabs", "tiktok"] = "tiktok"
     voice: str = "en_male_narration"
 
 
@@ -21,13 +21,15 @@ class SynthGenerator:
         self.cwd = cwd
 
         self.base = os.path.join(self.cwd, "audio_chunks")
-        self.filename = os.path.join(self.base, f"{uuid.uuid4()}.mp3")
 
         os.makedirs(self.base, exist_ok=True)
 
         self.client = ElevenLabs(
-            api_key=os.getenv("ELEVENLABS_API_KEY"),  # Defaults to ELEVEN_API_KEY
+            api_key=os.getenv("ELEVENLABS_API_KEY"), 
         )
+
+    def set_filename(self):
+        self.filename = os.path.join(self.base, f"{uuid.uuid4()}.mp3")
 
     async def generate_with_eleven(self, text: str) -> str:
         self.voice = Voice(
@@ -46,10 +48,11 @@ class SynthGenerator:
         return self.filename
 
     async def generate_with_tiktok(self, text: str) -> str:
-        tiktokvoice.tts(text, voice=str(self.voice), filename=self.filename)
+        tiktokvoice.tts(text, voice=str(self.config.voice), filename=self.filename)
         return self.filename
 
     async def generate_audio(self, text: str) -> str:
+        self.set_filename()
         logger.info(f"Synthesizing text: {text}")
         if self.config.voice_provider == "tiktok":
             return await self.generate_with_tiktok(text)

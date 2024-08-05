@@ -1,3 +1,4 @@
+import asyncio
 import multiprocessing
 import os
 
@@ -11,12 +12,11 @@ import moviepy.config as moviepy_config
 from pydantic import BaseModel
 from typing_extensions import cast
 
-from app.prompt_chain import PromptGenerator
+from app.prompt_gen import PromptGenerator
 from app.subtitle_gen import SubtitleGenerator
 from app.synth_gen import SynthConfig, SynthGenerator
 from app.video_gen import VideoGenerator, VideoGeneratorConfig
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -30,10 +30,6 @@ moviepy_config.check()
 
 class ReelsMakerConfig(BaseModel):
     cwd: str
-    subtitles_position: str = "center,center"
-    text_color: str | None = "#ffffff"
-    voice: str = "en_male_narration"
-
     prompt: str | None = None
     """ ai prompt to generate sentence """
 
@@ -61,40 +57,40 @@ class ReelsMaker:
 
         self.video_generator = VideoGenerator(self.cwd, config.video_gen_config)
         self.syth_generator = SynthGenerator(self.cwd, config.synth_config)
-
         self.prompt_generator = PromptGenerator()
 
         self.sentences: list[str] = []
+
         self.audio_paths = []
         self.audio_clip_paths = []
         self.final_audio_path = ""
 
         # Set from client
         self.threads: int = multiprocessing.cpu_count()
-        self.subtitles_position = config.subtitles_position
-        self.text_color = config.text_color
-        self.voice = config.voice
-        self.background_music_path = os.path.join(self.cwd, "background.mp3")
+        self.background_music_path = self.config.background_music_path
 
         logger.info(f"Starting Reels Maker with: {self.config.model_dump()}")
 
-    async def download_audio(self, audio_url) -> str:
+    async def download_resource(self, url) -> str:
         async with aiohttp.ClientSession() as session:
-            logger.info(f"Downloading audio from: {audio_url}")
-            async with session.get(audio_url) as response:
-                with open(
-                    os.path.join(self.cwd, os.path.basename(audio_url)), "wb"
-                ) as f:
+            logger.info(f"Downloading resource from: {url}")
+            async with session.get(url) as response:
+                with open(os.path.join(self.cwd, os.path.basename(url)), "wb") as f:
                     f.write(await response.read())
-                    return os.path.join(self.cwd, os.path.basename(audio_url))
+                    logger.debug(f"Downloaded resource from: {url}")
+                    return os.path.join(self.cwd, os.path.basename(url))
 
     async def generate_script(self, sentence: str):
         logger.debug(f"Generating script from prompt: {sentence}")
-        return await self.prompt_generator.generate_sentence(sentence)
+        sentence = await self.prompt_generator.generate_sentence(sentence)
+        return sentence.replace('"', "")
 
     async def generate_search_terms(self, script):
         logger.debug("Generating search terms for script...")
-        return ["life", "canvas", "waiting", "brush", "unleash"]
+        response = await self.prompt_generator.generate_hashtags(script)
+        tags = [tag.replace("#", "") for tag in response.hashtags]
+        logger.info(f"Generated search terms: {tags}")
+        return tags
 
     async def synth_text(self, text: str) -> str:
         return await self.syth_generator.generate_audio(text)
@@ -108,7 +104,7 @@ class ReelsMaker:
 
     async def start(self) -> str:
         if self.config.background_audio_url:
-            self.background_music_path = await self.download_audio(
+            self.background_music_path = await self.download_resource(
                 self.config.background_audio_url
             )
 
@@ -134,11 +130,28 @@ class ReelsMaker:
         else:
             logger.debug("Generating search terms for script...")
             search_terms = await self.generate_search_terms(script=script)
+
+            # holds all remote urls
+            remote_urls = []
+
             for search_term in search_terms:
+                # search for a related background video
                 video_path = await self.video_generator.get_video_url(
                     search_term=search_term
                 )
-                video_paths.append(video_path)
+                if not video_path:
+                    continue
+
+                remote_urls.append(video_path)
+
+            # download all remote videos at once
+            tasks = []
+            for url in remote_urls:
+                task = asyncio.create_task(self.download_resource(url))
+                tasks.append(task)
+
+            local_paths = await asyncio.gather(*tasks)
+            video_paths.extend(local_paths)
 
         self.audio_clip_paths: list[AudioFileClip] = []
 

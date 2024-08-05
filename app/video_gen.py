@@ -14,6 +14,7 @@ from moviepy.video.compositing.concatenate import concatenate_videoclips
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.video.VideoClip import TextClip
 from pydantic import BaseModel
+from app.pexel import search_for_stock_videos
 
 
 class VideoGeneratorConfig(BaseModel):
@@ -102,9 +103,18 @@ class VideoGenerator:
 
         return combined_video_path
 
-    async def get_video_url(self, search_term: str) -> str:
-        idx = round(random.uniform(1, 3))
-        return (Path(self.cwd) / f"segments/{idx}.mp4").as_posix()
+    async def get_video_url(self, search_term: str) -> str | None:
+        try:
+            urls = await search_for_stock_videos(
+                limit=2,
+                min_dur=10,
+                query=search_term,
+            )
+            return urls[0] if len(urls) > 0 else None
+        except Exception as e:
+            logger.error(f"Consistency Violation: {e}")
+
+        return None
 
     async def generate_video(
         self,

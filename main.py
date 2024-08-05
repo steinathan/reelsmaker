@@ -6,6 +6,8 @@ from loguru import logger
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from app.reels_maker import ReelsMaker, ReelsMakerConfig
+from app.synth_gen import SynthConfig
+from app.video_gen import VideoGeneratorConfig
 
 
 if "queue" not in st.session_state:
@@ -22,20 +24,29 @@ async def download_to_path(dest: str, buff: UploadedFile) -> str:
 
 async def main():
     st.title("AI Reels Story Maker")
-    st.write("Auto generate AI Reels Video Story from simple prompts")
+    st.write("Create Engaging Faceless Videos for Social Media in Seconds")
+    st.write(
+        "Our tools make it easy to create captivating faceless videos that boost engagement and reach on social media in seconds."
+    )
     st.divider()
 
-    prompt = st.text_area(
-        label="Enter your prompt",
-        placeholder="A motivation quote about life & pleasure",
-        height=100,
+    sentence_tab, prompt_tab = st.tabs(
+        ["Enter your motivational quote", "Enter Prompt"]
     )
 
-    sentence = st.text_area(
-        label="Enter your quote",
-        placeholder="Nothing is impossible. The word itself says 'I'm possible!, Champions keep playing until they get it right, You are never too old to set another goal or to dream a new dream.",
-        height=100,
-    )
+    with sentence_tab:
+        sentence = st.text_area(
+            label="Enter your quote",
+            placeholder="Nothing is impossible. The word itself says 'I'm possible!, Champions keep playing until they get it right, You are never too old to set another goal or to dream a new dream.",
+            height=100,
+        )
+
+    with prompt_tab:
+        prompt = st.text_area(
+            label="Enter your prompt",
+            placeholder="A motivation quote about life & pleasure",
+            height=100,
+        )
 
     st.write("Choose background videos")
     upload_video_tab, auto_video_tab = st.tabs(["Upload Videos", "Auto Add video"])
@@ -89,9 +100,11 @@ async def main():
             cwd=cwd,
             prompt=prompt,
             sentence=sentence,
-            subtitles_position=subtitles_position or "center,center",
-            text_color=color or "#ffffff",
-            voice=voice or "en_male_narration",
+            video_gen_config=VideoGeneratorConfig(
+                subtitles_position=str(subtitles_position),
+                text_color=str(color),
+            ),
+            synth_config=SynthConfig(voice=str(voice)),
         )
 
         # read all uploaded files and save in a path
@@ -100,22 +113,19 @@ async def main():
                 await download_to_path(dest=os.path.join(config.cwd, p.name), buff=p)
                 for p in uploaded_videos
             ]
-        else:
-            st.error("please upload 1 or more videos")
-            return
 
         # read uploaded file and save in a path
         if uploaded_audio:
             config.background_music_path = await download_to_path(
                 dest=os.path.join(config.cwd, "background.mp3"), buff=uploaded_audio
             )
-        else:
-            st.error("No audio uploaded")
-            return
 
         print(f"starting reels maker: {config.model_dump_json()}")
 
-        with st.spinner("Generating reels, wait for it..."):
+        st.write(
+            "This process is CPU-intensive and will take a considerable time to complete"
+        )
+        with st.spinner("Generating reels, this will take ~5mins or less..."):
             try:
                 if len(queue.items()) > 1:
                     raise Exception("queue is full - someone else is generating reels")
@@ -134,4 +144,5 @@ async def main():
                 st.error(e)
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
