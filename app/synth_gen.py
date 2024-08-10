@@ -11,7 +11,7 @@ from app import tiktokvoice
 
 
 class SynthConfig(BaseModel):
-    voice_provider: Literal["elevenlabs", "tiktok"] = "tiktok"
+    voice_provider: Literal["elevenlabs", "tiktok"] = "elevenlabs"
     voice: str = "en_male_narration"
 
 
@@ -25,7 +25,7 @@ class SynthGenerator:
         os.makedirs(self.base, exist_ok=True)
 
         self.client = ElevenLabs(
-            api_key=os.getenv("ELEVENLABS_API_KEY"), 
+            api_key=os.getenv("ELEVENLABS_API_KEY"),
         )
 
     def set_filename(self):

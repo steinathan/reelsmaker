@@ -23,7 +23,7 @@ class VideoGeneratorConfig(BaseModel):
     text_color: str = "white"
     stroke_width: int = 5
     font_path: str = "fonts/bold_font.ttf"
-    bg_color: str = "yellow"
+    bg_color: str = "gray20"
     subtitles_position: str = "center,center"
     threads: int = multiprocessing.cpu_count()
 

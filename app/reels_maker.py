@@ -196,9 +196,8 @@ class ReelsMaker:
 
         video_clip = await self.video_generator.add_fade_out(video_clip)
 
-        video_clip.write_videofile(
-            os.path.join(self.cwd, "master__final__video.mp4"), threads=self.threads
-        )
+        self.final_video_path = os.path.join(self.cwd, "master__final__video.mp4")
+        video_clip.write_videofile(self.final_video_path, threads=self.threads)
 
         logger.info((f"Final video: {self.final_video_path}"))
         logger.info("video generated successfully!")
