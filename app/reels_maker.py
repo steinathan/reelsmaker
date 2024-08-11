@@ -85,10 +85,15 @@ class ReelsMaker:
         sentence = await self.prompt_generator.generate_sentence(sentence)
         return sentence.replace('"', "")
 
-    async def generate_search_terms(self, script):
+    async def generate_search_terms(self, script, max_hashtags: int = 5):
         logger.debug("Generating search terms for script...")
         response = await self.prompt_generator.generate_hashtags(script)
         tags = [tag.replace("#", "") for tag in response.hashtags]
+        logger.info(f"Generated search terms: {tags}")
+        if len(tags) > max_hashtags:
+            logger.info(f"Truncated search terms to {max_hashtags} tags")
+            tags = tags[:max_hashtags]
+
         logger.info(f"Generated search terms: {tags}")
         return tags
 
@@ -129,7 +134,9 @@ class ReelsMaker:
             video_paths = self.config.video_paths
         else:
             logger.debug("Generating search terms for script...")
-            search_terms = await self.generate_search_terms(script=script)
+            search_terms = await self.generate_search_terms(
+                script=script, max_hashtags=10
+            )
 
             # holds all remote urls
             remote_urls = []
@@ -174,7 +181,7 @@ class ReelsMaker:
         combined_video_path = await self.video_generator.combine_videos(
             video_paths=video_paths,
             max_duration=temp_audio.duration,
-            max_clip_duration=5,
+            max_clip_duration=3,
             threads=self.threads,
         )
 

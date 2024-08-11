@@ -11,13 +11,14 @@ from pydantic import BaseModel
 
 class SubtitleConfig(BaseModel):
     cwd: str
+    max_chars: int = 15
 
 
 class SubtitleGenerator:
     def __init__(self, cwd):
-        self.cwd = cwd
+        self.config = SubtitleConfig(cwd=cwd)
 
-    async def wordify(self, srt_path: str, max_chars: int = 10) -> None:
+    async def wordify(self, srt_path: str, max_chars) -> None:
         """Wordify the srt file, each line is a word
 
         Example:
@@ -47,7 +48,7 @@ class SubtitleGenerator:
     ) -> str:
         logger.info("Generating subtitles...")
 
-        basedir = os.path.join(self.cwd, "subtitles")
+        basedir = os.path.join(self.config.cwd, "subtitles")
         os.makedirs(basedir, exist_ok=True)
 
         subtitles_path = Path(basedir, f"{uuid.uuid4()}.srt")
@@ -58,7 +59,9 @@ class SubtitleGenerator:
         with open(subtitles_path, "w+") as file:
             file.write(subtitles)
 
-        await self.wordify(srt_path=subtitles_path.as_posix())
+        await self.wordify(
+            srt_path=subtitles_path.as_posix(), max_chars=self.config.max_chars
+        )
         return subtitles_path.as_posix()
 
     async def locally_generate_subtitles(

@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 import random
 import uuid
 from pathlib import Path
@@ -23,9 +24,10 @@ class VideoGeneratorConfig(BaseModel):
     text_color: str = "white"
     stroke_width: int = 5
     font_path: str = "fonts/bold_font.ttf"
-    bg_color: str = "gray20"
+    bg_color: str | None = None
     subtitles_position: str = "center,center"
     threads: int = multiprocessing.cpu_count()
+    watermark_path: str | None = None
 
 
 class VideoGenerator:
@@ -123,7 +125,7 @@ class VideoGenerator:
         subtitles_path: str,
     ) -> str:
         def generator(txt):
-            return TextClip(
+            textclip = TextClip(
                 text=txt,
                 font="fonts/bold_font.ttf",
                 font_size=self.config.fontsize,
@@ -131,8 +133,12 @@ class VideoGenerator:
                 stroke_color=self.config.stroke_color,
                 stroke_width=self.config.stroke_width,
                 method="label",
-                bg_color=self.config.bg_color,
             )
+
+            if self.config.bg_color:
+                textclip.bg_color = self.config.bg_color  # type: ignore
+
+            return textclip
 
         horizontal_subtitles_position, vertical_subtitles_position = (
             self.config.subtitles_position.split(",")
@@ -141,14 +147,22 @@ class VideoGenerator:
         subtitles = SubtitlesClip(
             subtitles=subtitles_path, make_textclip=generator, encoding="utf-8"
         )
-        result = CompositeVideoClip(
-            [
-                VideoFileClip(combined_video_path),
-                subtitles.with_position(
-                    (horizontal_subtitles_position, vertical_subtitles_position)
-                ),
-            ]
+
+        subtitles_clip = subtitles.with_position(
+            (horizontal_subtitles_position, vertical_subtitles_position)
         )
+
+        self.video_clip = VideoFileClip(combined_video_path)
+
+        clips = [self.video_clip, subtitles_clip]
+
+        if self.config.watermark_path:
+            watermark_clip = self.__get_watermark_clip()
+            if watermark_clip:
+                logger.debug(f"added watermark: {self.config.watermark_path}")
+                clips.append(self.__get_watermark_clip())
+
+        result = CompositeVideoClip(clips=clips)
 
         audio = AudioFileClip(tts_path)
         result = result.with_audio(audio)
@@ -178,3 +192,18 @@ class VideoGenerator:
     async def add_fade_out(self, video_clip: VideoFileClip) -> VideoFileClip:
         """Adds a fade out to the end of the video but let the audio continue playing."""
         return fx.fadeout(video_clip, 3)
+
+    def __get_watermark_clip(self):
+        if not self.config.watermark_path:
+            logger.warning("Skipping watermark because its not provided")
+            return None
+
+        assert self.video_clip is not None, "Video is not loaded"
+
+        watermark = ImageClip(self.config.watermark_path)
+        watermark = watermark.with_duration(self.video_clip.duration)
+        watermark = watermark.with_position(("right", "bottom"))
+        watermark = watermark.margin(right=8, top=8, bottom=8, opacity=0)
+        watermark = watermark.resize(height=50)
+
+        return watermark

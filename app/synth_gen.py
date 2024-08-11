@@ -10,8 +10,11 @@ from pydantic import BaseModel
 from app import tiktokvoice
 
 
+VOICE_PROVIDER = Literal["elevenlabs", "tiktok"]
+
+
 class SynthConfig(BaseModel):
-    voice_provider: Literal["elevenlabs", "tiktok"] = "elevenlabs"
+    voice_provider: VOICE_PROVIDER = "tiktok"
     voice: str = "en_male_narration"
 
 
@@ -33,8 +36,7 @@ class SynthGenerator:
 
     async def generate_with_eleven(self, text: str) -> str:
         self.voice = Voice(
-            voice_id="pNInz6obpgDQGcFmaJgB",
-            name="Adam",
+            voice_id="ALDM8G793G6dq21Vj1Jm",
             settings=VoiceSettings(
                 stability=0.71, similarity_boost=0.5, style=0.0, use_speaker_boost=True
             ),

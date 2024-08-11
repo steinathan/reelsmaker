@@ -1,12 +1,14 @@
 import asyncio
+import multiprocessing
 import os
+import typing
 from uuid import uuid4
 
 from loguru import logger
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 from app.reels_maker import ReelsMaker, ReelsMakerConfig
-from app.synth_gen import SynthConfig
+from app.synth_gen import VOICE_PROVIDER, SynthConfig
 from app.video_gen import VideoGeneratorConfig
 
 
@@ -49,10 +51,9 @@ async def main():
         )
 
     st.write("Choose background videos")
-    upload_video_tab, auto_video_tab = st.tabs(["Upload Videos", "Auto Add video"])
+    auto_video_tab, upload_video_tab = st.tabs(["Auto Add video", "Upload Videos"])
 
     with auto_video_tab:
-        st.warning("Sorry, this feature is not available yet")
         st.write(
             "We'll automatically download background videos related to your prompt, usefull when you don't have a background video"
         )
@@ -79,12 +80,39 @@ async def main():
         )
 
     voice = st.selectbox("Choose a voice", ["en_male_narration", "en_us_001"])
+    voice_provider = st.selectbox("Select voice provider", ["elevenlabs", "tiktok"])
 
-    # Subtitles color
-    color = st.selectbox("Subtitles color", ["#ffffff", "#000000"])
+    col1, col2, col3 = st.columns(3)
 
-    # Subtitles position
-    subtitles_position = st.selectbox("Subtitles position", ["center,center"])
+    # Video Gen config
+    with col1:
+        text_color = st.color_picker("Subtitles Text color", value="#ffffff")
+
+    with col2:
+        stroke_color = st.color_picker("Subtitles Stroke color", value="#000000")
+
+    with col3:
+        bg_color = st.color_picker(
+            "Subtitles Background color (None)",
+            value=None,
+        )
+
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        stroke_width = st.number_input("Stroke width", value=2, step=1, min_value=1)
+
+    with col5:
+        fontsize = st.number_input("Font size", value=80, step=1, min_value=1)
+
+    with col6:
+        subtitles_position = st.selectbox("Subtitles position", ["center,center"])
+
+    # text_color = st.color_picker("Text color", value="#ffffff")
+    cpu_count = multiprocessing.cpu_count()
+    if cpu_count > 1:
+        cpu_count = cpu_count - 1
+
+    threads = st.number_input("Threads", value=cpu_count, step=1, min_value=1)
 
     submitted = st.button("Generate Reels", use_container_width=True, type="primary")
 
@@ -101,10 +129,21 @@ async def main():
             prompt=prompt,
             sentence=sentence,
             video_gen_config=VideoGeneratorConfig(
+                bg_color=str(bg_color),
+                fontsize=int(fontsize),
+                stroke_color=str(stroke_color),
+                stroke_width=int(stroke_width),
                 subtitles_position=str(subtitles_position),
-                text_color=str(color),
+                text_color=str(text_color),
+                threads=int(threads),
+                # watermark_path="images/watermark.png",
             ),
-            synth_config=SynthConfig(voice=str(voice)),
+            synth_config=SynthConfig(
+                voice=str(voice),
+                voice_provider=typing.cast(
+                    VOICE_PROVIDER, voice_provider or "elevenlabs"
+                ),
+            ),
         )
 
         # read all uploaded files and save in a path
