@@ -6,14 +6,9 @@ ReelsMaker is a Python-based/streamlit application designed to create captivatin
 
 ### Examples
 
-<details>
-  <summary>Example videos</summary>
-
 <video src='examples/example1.mp4' />
 <video src='examples/example2.mp4' />
 <video src='examples/example3.mp4' />
-
-</details>
 
 ### Features
 
@@ -33,6 +28,12 @@ create a virtual environment and install
 ```sh
 $ poetry shell
 $ poetry install
+```
+
+copy and update the `.env`
+
+```sh
+$ cp .env.example .env
 ```
 
 start the application
