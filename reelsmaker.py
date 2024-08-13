@@ -80,7 +80,7 @@ async def main():
         )
 
     voice = st.selectbox("Choose a voice", ["en_male_narration", "en_us_001"])
-    voice_provider = st.selectbox("Select voice provider", ["elevenlabs", "tiktok"])
+    voice_provider = st.selectbox("Select voice provider", ["tiktok", "elevenlabs"])
 
     col1, col2, col3 = st.columns(3)
 
@@ -140,9 +140,7 @@ async def main():
             ),
             synth_config=SynthConfig(
                 voice=str(voice),
-                voice_provider=typing.cast(
-                    VOICE_PROVIDER, voice_provider or "elevenlabs"
-                ),
+                voice_provider=typing.cast(VOICE_PROVIDER, voice_provider or "tiktok"),
             ),
         )
 
