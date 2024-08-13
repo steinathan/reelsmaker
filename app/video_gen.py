@@ -124,19 +124,26 @@ class VideoGenerator:
         tts_path: str,
         subtitles_path: str,
     ) -> str:
-        def generator(txt):
+        def generator(txt) -> TextClip:
+            textclip_kwargs = {
+                "font_size": self.config.fontsize,
+                "color": self.config.text_color,
+                "stroke_color": self.config.stroke_color,
+                "stroke_width": self.config.stroke_width,
+                "bg_color": self.config.bg_color,
+            }
+
+            # remove keys with "none"
+            for k, v in textclip_kwargs.items():
+                if not v:
+                    del textclip_kwargs[k]
+
             textclip = TextClip(
                 text=txt,
                 font="fonts/bold_font.ttf",
-                font_size=self.config.fontsize,
-                color=self.config.text_color,
-                stroke_color=self.config.stroke_color,
-                stroke_width=self.config.stroke_width,
                 method="label",
+                **textclip_kwargs,
             )
-
-            if self.config.bg_color:
-                textclip.bg_color = self.config.bg_color  # type: ignore
 
             return textclip
 

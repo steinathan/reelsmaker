@@ -15,6 +15,7 @@ from typing_extensions import cast
 from app.prompt_gen import PromptGenerator
 from app.subtitle_gen import SubtitleGenerator
 from app.synth_gen import SynthConfig, SynthGenerator
+from app.utils import split_by_dot_or_newline
 from app.video_gen import VideoGenerator, VideoGeneratorConfig
 from dotenv import load_dotenv
 
@@ -124,7 +125,7 @@ class ReelsMaker:
         # split script into sentences
         assert script is not None, "Script should not be None"
 
-        sentences = script.split(". ")
+        sentences = split_by_dot_or_newline(script)
         sentences = list(filter(lambda x: x != "", sentences))
         self.sentences = cast(list[str], sentences)
 
@@ -141,7 +142,9 @@ class ReelsMaker:
             # holds all remote urls
             remote_urls = []
 
-            for search_term in search_terms:
+            max_videos = int(os.getenv("MAX_BG_VIDEOS", 2))
+
+            for search_term in search_terms[:max_videos]:
                 # search for a related background video
                 video_path = await self.video_generator.get_video_url(
                     search_term=search_term

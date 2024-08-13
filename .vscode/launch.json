@@ -13,7 +13,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "run",
-                "main.py"
+                "reelsmaker.py"
             ]
         }
     ]
