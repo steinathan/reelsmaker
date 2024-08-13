@@ -6,9 +6,11 @@ ReelsMaker is a Python-based/streamlit application designed to create captivatin
 
 ### Examples
 
-<video src='examples/example1.mp4' />
-<video src='examples/example2.mp4' />
-<video src='examples/example3.mp4' />
+https://github.com/user-attachments/assets/e65f70a9-8412-4b74-b11b-1009722831bc
+
+https://github.com/user-attachments/assets/aff6b1fb-fd55-4411-bb07-20d65a14ee60
+
+https://github.com/user-attachments/assets/bd1d4948-6a54-45c6-b121-ffd064c7419f
 
 ### Features
 
@@ -48,4 +50,4 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 
 ### License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details
