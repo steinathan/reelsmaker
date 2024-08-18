@@ -41,7 +41,7 @@ You are a motivational reels narrator, you must generate a motivational quote in
         """generates hashtags from a sentence"""
 
         system_template = """
-generate hashtags for the sentence below, the hashtags must be short and concise and will be used to query an api:
+generate pexels.com hashtags keywords for the sentence below, the hashtags must be short and concise and will be used to query the api:
 
 {format_instructions}
 

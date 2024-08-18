@@ -1,23 +1,25 @@
 import asyncio
 import multiprocessing
 import os
+import shutil
 
 import aiohttp
+import moviepy.config as moviepy_config
+from dotenv import load_dotenv
 from loguru import logger
 from moviepy.audio.AudioClip import concatenate_audioclips
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.editor import VideoFileClip
-import moviepy.config as moviepy_config
-
 from pydantic import BaseModel
 from typing_extensions import cast
 
+from app.config import videos_cache_path
 from app.prompt_gen import PromptGenerator
 from app.subtitle_gen import SubtitleGenerator
 from app.synth_gen import SynthConfig, SynthGenerator
 from app.utils import split_by_dot_or_newline
+from app.utils import search_file
 from app.video_gen import VideoGenerator, VideoGeneratorConfig
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -73,12 +75,23 @@ class ReelsMaker:
         logger.info(f"Starting Reels Maker with: {self.config.model_dump()}")
 
     async def download_resource(self, url) -> str:
+        filename = os.path.basename(url)
+        file_path = os.path.join(self.cwd, filename)
+        file_cache_path = search_file(videos_cache_path, filename)
+        if file_cache_path:
+            shutil.copy2(file_cache_path, file_path)
+            logger.info(f"Found resource in cache: {file_cache_path}")
+            return file_path
+
         async with aiohttp.ClientSession() as session:
             logger.info(f"Downloading resource from: {url}")
             async with session.get(url) as response:
-                with open(os.path.join(self.cwd, os.path.basename(url)), "wb") as f:
+                with open(file_path, "wb") as f:
                     f.write(await response.read())
                     logger.debug(f"Downloaded resource from: {url}")
+
+                    # save to cache audios
+                    shutil.copy2(file_path, videos_cache_path)
                     return os.path.join(self.cwd, os.path.basename(url))
 
     async def generate_script(self, sentence: str):
@@ -90,9 +103,8 @@ class ReelsMaker:
         logger.debug("Generating search terms for script...")
         response = await self.prompt_generator.generate_hashtags(script)
         tags = [tag.replace("#", "") for tag in response.hashtags]
-        logger.info(f"Generated search terms: {tags}")
         if len(tags) > max_hashtags:
-            logger.info(f"Truncated search terms to {max_hashtags} tags")
+            logger.warning(f"Truncated search terms to {max_hashtags} tags")
             tags = tags[:max_hashtags]
 
         logger.info(f"Generated search terms: {tags}")

@@ -1,4 +1,5 @@
 import re
+from .path_util import *
 
 
 def split_by_dot_or_newline(text):

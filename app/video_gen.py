@@ -96,10 +96,12 @@ class VideoGenerator:
                     clip = clip.subclip(0, max_clip_duration)
 
                 clips.append(clip)
+
+                self.close_clip(clip)
                 tot_dur += clip.duration
                 logger.debug(f"Total duration after adding clip: {tot_dur}")
 
-        final_clip = concatenate_videoclips(clips)
+        final_clip = concatenate_videoclips(clips=clips, method="compose")
         final_clip = final_clip.with_fps(30)
         final_clip.write_videofile(combined_video_path, threads=threads)
 
@@ -178,6 +180,12 @@ class VideoGenerator:
         result.write_videofile(output_path, threads=self.config.threads)
 
         return output_path
+
+    def close_clip(self, clip: VideoFileClip):
+        try:
+            clip.close()
+        except Exception as e:
+            logger.exception(f"Error in close_clip(): {e}")
 
     async def add_background_music(self, video_clip: VideoFileClip, song_path: str):
         logger.info(f"Adding background music: {song_path}")
